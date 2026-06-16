@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi DES — Data Encryption Standard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <nav class="navbar sticky-top shadow-sm">
+        <div class="container-fluid px-3 px-md-4">
+            <button class="btn btn-outline-light btn-sm d-md-none me-2" id="sidebarToggle" type="button" aria-label="Buka menu">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
+            </button>
+            <span class="navbar-brand mb-0 h1 fw-bold">
+                <span class="brand-icon">DES</span> Simulasi DES
+            </span>
+            <span class="badge badge-accent d-none d-sm-inline">Kriptografi · 64-bit Block Cipher</span>
+        </div>
+    </nav>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+    <div class="app-layout">
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-inner">
+                <p class="sidebar-label">Navigasi</p>
+                <ul class="nav flex-column gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#section-input" data-section="section-input">
+                            <span class="nav-num">1</span> Parameter Input
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section-output" data-section="section-output">
+                            <span class="nav-num">2</span> Hasil Output
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section-keys" data-section="section-keys">
+                            <span class="nav-num">3</span> Key Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section-process" data-section="section-process">
+                            <span class="nav-num">4</span> Proses Feistel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section-sbox" data-section="section-sbox">
+                            <span class="nav-num">5</span> S-Box Matrix
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section-verification" data-section="section-verification">
+                            <span class="nav-num">6</span> Verifikasi
+                        </a>
+                    </li>
+                </ul>
+                <div class="sidebar-tip mt-4">
+                    <strong>Tips:</strong> Gunakan contoh bawaan (Reset Default) untuk menguji algoritma dengan vektor standar.
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop d-md-none" id="sidebarBackdrop"></div>
+
+        <main class="main-content">
+            <section id="section-input" class="content-section">
+                <div class="section-header">
+                    <h2>Parameter Input</h2>
+                    <p>Masukkan data 64-bit dan kunci enkripsi untuk memulai simulasi DES.</p>
+                </div>
+
+                <div class="card input-card">
+                    <div class="card-body">
+                        <form id="desForm" novalidate>
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Format Data</label>
+                                    <div class="option-group">
+                                        <label class="option-pill">
+                                            <input type="radio" name="formatRadio" id="formatHex" value="hex" checked>
+                                            <span>Hexadecimal <small>(16 karakter)</small></span>
+                                        </label>
+                                        <label class="option-pill">
+                                            <input type="radio" name="formatRadio" id="formatBin" value="bin">
+                                            <span>Binary <small>(64 bit)</small></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Mode Operasi</label>
+                                    <div class="option-group">
+                                        <label class="option-pill option-encrypt">
+                                            <input type="radio" name="modeRadio" id="modeEnc" value="encrypt" checked>
+                                            <span>Enkripsi</span>
+                                        </label>
+                                        <label class="option-pill option-decrypt">
+                                            <input type="radio" name="modeRadio" id="modeDec" value="decrypt">
+                                            <span>Dekripsi</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="inputData" class="form-label mb-0" id="inputLabel">Plaintext (Hex)</label>
+                                    <span class="char-counter" id="inputCounter">0 / 16</span>
+                                </div>
+                                <input type="text" class="form-control font-mono" id="inputData"
+                                    placeholder="Contoh: A1B2C3D4E5F60718" autocomplete="off" spellcheck="false">
+                                <div class="form-hint" id="inputHelp">16 karakter hex (0-9, A-F)</div>
+                                <div class="invalid-feedback" id="inputError"></div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="keyData" class="form-label mb-0">Kunci (Key 64-bit)</label>
+                                    <span class="char-counter" id="keyCounter">0 / 16</span>
+                                </div>
+                                <input type="text" class="form-control font-mono" id="keyData"
+                                    placeholder="Contoh: 0F1E2D3C4B5A6978" autocomplete="off" spellcheck="false">
+                                <div class="form-hint" id="keyHelp">16 karakter hex (0-9, A-F)</div>
+                                <div class="invalid-feedback" id="keyError"></div>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg px-4" id="btnSubmit">
+                                    <span class="btn-text">Hitung Proses DES</span>
+                                    <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                </button>
+                                <button type="button" id="btnExample" class="btn btn-outline-primary">Contoh Otomatis</button>
+                                <button type="button" id="btnReset" class="btn btn-outline-secondary">Reset Default</button>
+                                <button type="button" id="btnClear" class="btn btn-outline-danger">Bersihkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <div id="loading" class="loading-state d-none">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p>Memproses 16 putaran Feistel...</p>
+            </div>
+
+            <div id="resultContainer" class="d-none">
+                <section id="section-output" class="content-section">
+                    <div class="section-header">
+                        <h2>Hasil Output</h2>
+                        <p>Nilai akhir setelah permutasi IP⁻¹.</p>
+                    </div>
+                    <div class="card output-card">
+                        <div class="card-body">
+                            <div class="output-row">
+                                <div class="output-label">
+                                    <span class="badge badge-hex">HEX</span>
+                                    <button type="button" class="btn-copy" data-copy="outHex" title="Salin">Salin</button>
+                                </div>
+                                <code id="outHex" class="output-value"></code>
+                            </div>
+                            <div class="output-row mt-3">
+                                <div class="output-label">
+                                    <span class="badge badge-bin">BIN</span>
+                                    <button type="button" class="btn-copy" data-copy="outBin" title="Salin">Salin</button>
+                                </div>
+                                <code id="outBin" class="output-value output-bin"></code>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-keys" class="content-section">
+                    <div class="section-header">
+                        <h2>Pembangkitan Subkey</h2>
+                        <p>Key schedule melalui PC-1, pergeseran C/D, dan kompresi PC-2.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Round</th>
+                                            <th>C (28-bit)</th>
+                                            <th>D (28-bit)</th>
+                                            <th>Subkey PC-2 (48-bit)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="keyTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="pc1_container" class="log-box m-3"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-process" class="content-section">
+                    <div class="section-header">
+                        <h2>Proses Feistel (16 Round)</h2>
+                        <p>Detail ekspansi E, XOR subkey, S-Box, dan permutasi P tiap putaran.</p>
+                    </div>
+                    <div id="pre_ip_log" class="log-box mb-3"></div>
+                    <div class="accordion accordion-custom" id="accordionRounds"></div>
+                    <div id="post_ip_log" class="log-box mt-3"></div>
+                </section>
+
+                <section id="section-sbox" class="content-section">
+                    <div class="section-header">
+                        <h2>Visualisasi S-Box</h2>
+                        <p>Pemetaan 8 S-Box dari putaran terakhir.</p>
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3" id="sboxGrid"></div>
+                </section>
+
+                <section id="section-verification" class="content-section">
+                    <div class="section-header">
+                        <h2>Verifikasi Round-Trip</h2>
+                        <p>Uji balik: hasil dienkripsi/didekripsi kembali harus sama dengan input asli.</p>
+                    </div>
+                    <div class="card verification-card text-center">
+                        <div class="card-body p-4">
+                            <div class="verification-flow">
+                                <span class="flow-step">Input</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step flow-step-active">Proses DES</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step">Output</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step">Operasi Balik</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step">Verifikasi</span>
+                            </div>
+                            <div id="verificationStatus" class="mt-4"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
